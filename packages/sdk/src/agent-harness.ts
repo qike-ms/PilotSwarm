@@ -1,4 +1,5 @@
 import type { CopilotClient, CopilotClientOptions, CopilotSession } from "@github/copilot-sdk";
+import path from "node:path";
 import { createCopilotClient, type ToolCatalogPolicyResolver } from "./copilot-client.js";
 import type { ToolCatalogCapability } from "./model-providers.js";
 
@@ -177,12 +178,20 @@ export function createCopilotAgentHarnessClientFrom(client: CopilotClient): Agen
 }
 
 /** Default adapter. Stage 1 preserves the pinned Copilot SDK behavior. */
-export const createCopilotAgentHarnessClient: AgentHarnessClientFactory = (options, context) =>
-    createCopilotAgentHarnessClientFrom(createCopilotClient(
-        options as CopilotClientOptions,
+export const createCopilotAgentHarnessClient: AgentHarnessClientFactory = (options, context) => {
+    const { sessionStateDir, env, ...clientOptions } = options;
+    return createCopilotAgentHarnessClientFrom(createCopilotClient(
+        {
+            ...clientOptions,
+            // Copilot places session state under $COPILOT_HOME/session-state.
+            // Translate the adapter's exact root instead of forwarding an
+            // unsupported sessionStateDir option or using ambient storage.
+            env: { ...env, COPILOT_HOME: path.dirname(sessionStateDir) },
+        } as CopilotClientOptions,
         context?.provider,
         context?.toolCatalog,
     ));
+};
 
 /** Compatibility accessor for code that intentionally uses Copilot-only RPCs. */
 export function asCopilotSession(session: AgentHarnessSession): CopilotSession {

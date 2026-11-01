@@ -111,11 +111,16 @@ test("the legacy client seam preserves an omitted start method", async () => {
     assert.equal((await managed.runTurn("hello")).content, "fake harness response");
 });
 
-test("the default harness factory preserves Copilot stdio transport", () => {
-    const client = createCopilotAgentHarnessClient({ sessionStateDir: "/synthetic/session-state" });
+test("the default harness factory preserves Copilot stdio transport and maps session storage", () => {
+    const client = createCopilotAgentHarnessClient({
+        sessionStateDir: "/synthetic/session-state",
+        env: { COPILOT_HOME: "/ambient/copilot" },
+    });
     assert.equal(client.harness, "copilot");
     assert.equal(client.raw.connectionConfig.kind, "stdio");
     assert.equal(client.raw.requestHandler, null);
+    assert.equal(client.raw.resolvedEnv.COPILOT_HOME, "/synthetic");
+    assert.equal(Object.hasOwn(client.raw.options, "sessionStateDir"), false);
 });
 
 test("the Copilot adapter preserves confirmation, final-message, and settlement event order", async () => {

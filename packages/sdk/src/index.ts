@@ -33,18 +33,6 @@
 export { PilotSwarmClient, PilotSwarmSession } from "./client.js";
 export type { SessionEventHandler } from "./client.js";
 export { PilotSwarmWorker } from "./worker.js";
-export { createCopilotAgentHarnessClient, createCopilotAgentHarnessClientFrom, createCopilotAgentHarnessSessionFrom } from "./agent-harness.js";
-export type {
-    AgentHarnessClient,
-    AgentHarnessClientContext,
-    AgentHarnessClientFactory,
-    AgentHarnessClientOptions,
-    AgentHarnessEvent,
-    AgentHarnessEventType,
-    AgentHarnessSession,
-    AgentHarnessTask,
-    AgentHarnessTaskRpc,
-} from "./agent-harness.js";
 export { FEATURE_FLAGS, FeatureFlagError, FeatureFlagResolutionError } from "./feature-flags.js";
 export type { FeatureKey, FeatureDecision, FeatureDefinition, FeatureSetting, ResolveOptions } from "./feature-flags.js";
 export { FeatureFlagCache } from "./feature-flag-cache.js";
