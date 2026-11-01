@@ -186,7 +186,7 @@ export const createCopilotAgentHarnessClient: AgentHarnessClientFactory = (optio
             // Copilot places session state under $COPILOT_HOME/session-state.
             // Translate the adapter's exact root instead of forwarding an
             // unsupported sessionStateDir option or using ambient storage.
-            env: { ...env, COPILOT_HOME: path.dirname(sessionStateDir) },
+            env: { ...(env ?? process.env), COPILOT_HOME: path.dirname(sessionStateDir) },
         } as CopilotClientOptions,
         context?.provider,
         context?.toolCatalog,

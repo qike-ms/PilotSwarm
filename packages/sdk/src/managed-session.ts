@@ -939,6 +939,11 @@ export class ManagedSession {
 
     constructor(
         sessionId: string,
+        copilotSession: CopilotSession,
+        config: ManagedSessionConfig,
+    );
+    constructor(
+        sessionId: string,
         copilotSession: AgentHarnessSession | CopilotSession,
         config: ManagedSessionConfig,
     ) {

@@ -67,10 +67,10 @@ class FakeHarnessClient {
 test("SessionManager creates and runs a session through an injected harness factory", async () => {
     const client = new FakeHarnessClient();
     const factoryCalls = [];
-    const manager = new SessionManager(undefined, null, {}, undefined, (options, context) => {
+    const manager = Reflect.construct(SessionManager, [undefined, null, {}, undefined, (options, context) => {
         factoryCalls.push({ options, context });
         return client;
-    });
+    }]);
     manager.setFactStore({});
 
     const session = await manager.getOrCreate("fake-session", {}, { turnIndex: 0 });

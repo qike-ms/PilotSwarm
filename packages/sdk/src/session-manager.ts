@@ -11,7 +11,7 @@ import type { FeatureFlagCache } from "./feature-flag-cache.js";
 import { createFeatureTools, FEATURE_OPERATION_SPECS } from "./feature-tools.js";
 import { FeatureFlagError, type FeatureOwner } from "./feature-flags.js";
 import type { FeatureViewer } from "./feature-store.js";
-import { type CopilotClient, type SectionOverride, type SessionConfig, type SystemMessageConfig, type Tool } from "@github/copilot-sdk";
+import { type CopilotClient, type CopilotSession, type SectionOverride, type SessionConfig, type SystemMessageConfig, type Tool } from "@github/copilot-sdk";
 import { BYOK_CLIENT_PREFIX, needsByokRequestCompatibility } from "./copilot-client.js";
 import {
     asCopilotClient,
@@ -769,19 +769,18 @@ export class SessionManager {
      * default `GITHUB_TOKEN` was set on the constructor.
      */
     get client(): CopilotClient | undefined {
-        const client = this.harnessClient;
+        const client = this._defaultHarnessClient();
         return client ? asCopilotClient(client) : undefined;
     }
     set client(value: CopilotClient | undefined) {
-        this.harnessClient = value ? createCopilotAgentHarnessClientFrom(value) : undefined;
+        this._setDefaultHarnessClient(value ? createCopilotAgentHarnessClientFrom(value) : undefined);
     }
-    /** Internal harness-agnostic compatibility seam used by adapter tests. */
-    get harnessClient(): AgentHarnessClient | undefined {
+    private _defaultHarnessClient(): AgentHarnessClient | undefined {
         return this.clients.get("") ?? this.clients.get(this.githubToken || "")
             ?? this.clients.get(BYOK_CLIENT_PREFIX)
             ?? this.clients.get(BYOK_CLIENT_PREFIX + (this.githubToken || ""));
     }
-    set harnessClient(value: AgentHarnessClient | undefined) {
+    private _setDefaultHarnessClient(value: AgentHarnessClient | undefined): void {
         const providerTokens = new Set<string>();
         for (const provider of this.workerDefaults.modelProviders?.allProviders ?? []) {
             const first = provider.models?.[0];
@@ -882,6 +881,12 @@ export class SessionManager {
     private sessionLastTouchedAt = new Map<string, number>();
     private readonly adminScope: AdminScope;
 
+    constructor(
+        githubToken?: string,
+        sessionStore?: SessionStateStore | null,
+        workerDefaults?: WorkerDefaults,
+        sessionStateDir?: string,
+    );
     constructor(
         private githubToken?: string,
         sessionStore?: SessionStateStore | null,
@@ -1125,7 +1130,7 @@ export class SessionManager {
             }
         }
         if (!client) {
-            client = this.harnessClient;
+            client = this._defaultHarnessClient();
             cacheKey = "";
         }
         if (!client) return { modelId: sdkModelName, known: false, vision: false };
@@ -2873,7 +2878,7 @@ export class SessionManager {
 
         if (nativeTaskAccess) copilotSession.on(event => nativeTaskAccess.observe(event));
         if (repoAgentAccess) copilotSession.on(event => repoAgentAccess.observe(event));
-        const managed = new ManagedSession(sessionId, copilotSession, config);
+        const managed = new ManagedSession(sessionId, copilotSession as unknown as CopilotSession, config);
         // The `load_skill` catalog (progressive discovery) — held on the
         // managed session, NEVER in the CLI's session config. Shared skills
         // plus this session owner's own private ones.
@@ -3044,7 +3049,7 @@ export class SessionManager {
                                 tools: [...ManagedSession.systemToolDefs(), ...ManagedSession.subAgentToolDefs()],
                                 onPermissionRequest: approvePermissionForSession,
                             });
-                            const managed = new ManagedSession(sessionId, copilotSession, config);
+                            const managed = new ManagedSession(sessionId, copilotSession as unknown as CopilotSession, config);
         // The `load_skill` catalog (progressive discovery) — held on the
         // managed session, NEVER in the CLI's session config. Shared skills
         // plus this session owner's own private ones.
